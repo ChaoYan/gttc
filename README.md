@@ -44,6 +44,11 @@ To run cross validation on WikiTables dataset:
 python run.py --exp cross_validation --config configs/wikitables.json
 ```
 
+To train & test on TTC dataset:
+```bash
+python run.py --exp train_test_ttc --config configs/tabletype.json
+```
+
 ## Citation
 If you use our code in your research, please cite our work:
 ```bibtex

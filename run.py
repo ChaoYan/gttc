@@ -11,6 +11,7 @@ import argparse
 from src.train.run_cross_validation import cross_validation
 from src.train.run_train_test import train_and_test
 from src.train.run_pretraining import pretrain
+from src.train.run_train_test_ttc import train_and_test_ttc
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -32,3 +33,8 @@ if __name__ == '__main__':
     elif args.exp == 'pretrain':
         config = json.load(open(args.config))
         pretrain(config)
+
+    # train and test on ttc dataset
+    elif args.exp == 'train_test_ttc':
+        config = json.load(open(args.config))
+        train_and_test_ttc(config)

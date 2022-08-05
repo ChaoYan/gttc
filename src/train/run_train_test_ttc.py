@@ -6,14 +6,17 @@ from pytorch_transformers import WarmupLinearSchedule
 from src.utils.trec_eval import write_trec_result, get_metrics
 from src.utils.load_data import load_queries, load_tables, load_qt_relations
 from src.utils.reproducibility import set_random_seed
-from src.model.retrieval import MatchingModel
+from src.model.classification import ClassificationModel
 from src.graph_construction.tabular_graph import TabularGraph
 from src.utils.process_table_and_query import *
+from sklearn.metrics import f1_score
 
+# queires is used for splitting tables. 1 for train, 2 for dev and 3 for test
 queries = None
+# tables contains all train, dev and test tables
 tables = None
+# qtrels is used for identifying labels
 qtrels = None
-
 
 def evaluate(config, model, query_id_list):
     qids = []
@@ -35,24 +38,26 @@ def evaluate(config, model, query_id_list):
                 dgl_graph = tables[tid]["dgl_graph"].to("cuda")
                 node_features = tables[tid]["node_features"].to("cuda")
 
-                score = model(table, query, dgl_graph, node_features, query_feature).item()
-
+                score = model(table, query, dgl_graph, node_features, query_feature).argmax(-1).item()               
                 qids.append(qid)
                 docids.append(tid)
                 gold_rel.append(rel)
                 pred_rel.append(score)
 
-    eval_df = pd.DataFrame(data={
-        'id_left': qids,
-        'id_right': docids,
-        'true': gold_rel,
-        'pred': pred_rel
-    })
+    # eval_df = pd.DataFrame(data={
+    #     'id_left': qids,
+    #     'id_right': docids,
+    #     'true': gold_rel,
+    #     'pred': pred_rel
+    # })
 
-    write_trec_result(eval_df)
-    metrics = get_metrics('ndcg_cut')
-    metrics.update(get_metrics('map'))
-    return metrics
+    # write_trec_result(eval_df)
+    # metrics = get_metrics('ndcg_cut')
+    # metrics.update(get_metrics('map'))
+    # return metrics
+
+    return {config['key_metric']: f1_score(gold_rel, pred_rel, average='macro')}
+    
 
 
 def train(config, model, train_query_ids, optimizer, scheduler, loss_func):
@@ -73,14 +78,10 @@ def train(config, model, train_query_ids, optimizer, scheduler, loss_func):
         query_feature = queries["feature"][qid].to("cuda")
 
         logits = []
-        label = None
-        pos = 0
+        labels = []
         for (tid, rel) in qtrels[qid].items():
             if tid not in tables:
                 continue
-
-            if rel == 1:
-                label = torch.LongTensor([pos]).to("cuda")
 
             table = tables[tid]
             dgl_graph = tables[tid]["dgl_graph"].to("cuda")
@@ -88,14 +89,12 @@ def train(config, model, train_query_ids, optimizer, scheduler, loss_func):
 
             logit = model(table, query, dgl_graph, node_features, query_feature)
             logits.append(logit)
+            
+            labels.append(rel)
 
-            pos += 1
-
-        if label is None or len(logits) < 2:
-            print(qid, query)
-            continue
-
-        loss = loss_func(torch.cat(logits).view(1, -1), label.view(1))
+        labels = torch.LongTensor(labels).to("cuda")
+        logits = torch.stack(logits)
+        loss = loss_func(logits, labels)
 
         batch_loss += loss
 
@@ -119,7 +118,7 @@ def train(config, model, train_query_ids, optimizer, scheduler, loss_func):
     return eloss / len(train_query_ids)
 
 
-def train_and_test(config):
+def train_and_test_ttc(config):
     set_random_seed()
 
     global queries, tables, qtrels
@@ -147,22 +146,22 @@ def train_and_test(config):
     del train_queries, dev_queries, test_queries
 
     ######## clean the dataset ###########
-    invalid_query = []
-    invalid_table = []
-    missing_pos = []
-    for qid in list(queries["sentence"].keys()):
-        if qid not in qtrels:
-            del queries["sentence"][qid]
-            invalid_query.append(qid)
-        elif qid not in tables:
-            del queries["sentence"][qid]
-            invalid_table.append(qid)
-        elif qid not in qtrels[qid]:
-            qtrels[qid][qid] = 1
-            missing_pos.append(qid)
-    print("invalid_query", len(invalid_query), invalid_query)
-    print("invalid_table", len(invalid_table), invalid_table)
-    print("missing_pos", len(missing_pos), missing_pos)
+    # invalid_query = []
+    # invalid_table = []
+    # missing_pos = []
+    # for qid in list(queries["sentence"].keys()):
+    #     if qid not in qtrels:
+    #         del queries["sentence"][qid]
+    #         invalid_query.append(qid)
+    #     elif qid not in tables:
+    #         del queries["sentence"][qid]
+    #         invalid_table.append(qid)
+    #     elif qid not in qtrels[qid]:
+    #         qtrels[qid][qid] = 1
+    #         missing_pos.append(qid)
+    # print("invalid_query", len(invalid_query), invalid_query)
+    # print("invalid_table", len(invalid_table), invalid_table)
+    # print("missing_pos", len(missing_pos), missing_pos)
 
     missing_tables = []
     for qid in list(queries["sentence"].keys()):
@@ -202,12 +201,12 @@ def train_and_test(config):
     test_query_ids = new_ids
     #######################################
 
-    constructor = TabularGraph(config["use_fasttext"], config["fasttext"])
+    constructor = TabularGraph(config["fasttext"], config["merge_same_cells"])
 
     queries["feature"] = process_queries(queries["sentence"], constructor)
     process_tables(tables, constructor)
 
-    model = MatchingModel(bert_dir=config["bert_dir"], do_lower_case=config["do_lower_case"],
+    model = ClassificationModel(bert_dir=config["bert_dir"], do_lower_case=config["do_lower_case"],
                           bert_size=config["bert_size"], gnn_output_size=config["gnn_size"])
 
     if config["use_pretrained_model"]:
@@ -219,7 +218,7 @@ def train_and_test(config):
     print(config)
     print(model, flush=True)
 
-    loss_func = torch.nn.CrossEntropyLoss()
+    loss_func = torch.nn.NLLLoss()
 
     optimizer = torch.optim.Adam([
         {'params': model.bert.parameters(), 'lr': config["bert_lr"]},
