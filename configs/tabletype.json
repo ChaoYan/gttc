@@ -1,5 +1,6 @@
 {
   "data_dir": "data/tabletype/",
+  "num_classes": 14,
   "fasttext": "wiki.en.bin",
   "bert_dir": "bert-base-uncased",
   "key_metric": "macro_f1", 

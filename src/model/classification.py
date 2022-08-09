@@ -7,7 +7,7 @@ from src.table_encoder.gat import GATEncoder
 
 
 class ClassificationModel(nn.Module):
-    def __init__(self, num_cls=3, bert_dir='bert-base-uncased', do_lower_case=True, bert_size=768, gnn_output_size=300):
+    def __init__(self, num_classes, bert_dir='bert-base-uncased', do_lower_case=True, bert_size=768, gnn_output_size=300):
         super().__init__()
         self.tokenizer = BertTokenizer.from_pretrained(bert_dir, do_lower_case=do_lower_case)
         self.bert = BertModel.from_pretrained(bert_dir)
@@ -24,7 +24,7 @@ class ClassificationModel(nn.Module):
             nn.Dropout(0.1),
             nn.Linear(300, 320),
             nn.LeakyReLU(0.2),
-            nn.Linear(320, num_cls),
+            nn.Linear(320, num_classes),
             nn.LogSoftmax(-1)
         )
 

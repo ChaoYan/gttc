@@ -206,7 +206,7 @@ def train_and_test_ttc(config):
     queries["feature"] = process_queries(queries["sentence"], constructor)
     process_tables(tables, constructor)
 
-    model = ClassificationModel(bert_dir=config["bert_dir"], do_lower_case=config["do_lower_case"],
+    model = ClassificationModel(config['num_classes'], bert_dir=config["bert_dir"], do_lower_case=config["do_lower_case"],
                           bert_size=config["bert_size"], gnn_output_size=config["gnn_size"])
 
     if config["use_pretrained_model"]:
