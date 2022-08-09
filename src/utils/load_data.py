@@ -28,7 +28,7 @@ def load_qt_relations(data_dir):
     qtrels = {}
     with open(os.path.join(data_dir, 'qtrels.txt')) as f:
         for line in f.readlines():
-            rel = line.strip().split()
+            rel = line.strip().split('\t')
             rel[0] = rel[0]
             rel[3] = int(rel[3])
             if rel[0] not in qtrels:
