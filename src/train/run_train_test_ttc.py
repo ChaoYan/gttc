@@ -234,14 +234,13 @@ def train_and_test_ttc(config):
     for epoch in range(config['epoch']):
         eloss = train(config, model, train_query_ids, optimizer, scheduler, loss_func)
         dev_metrics = evaluate(config, model, dev_query_ids)
-
-        wandb.log({'train/loss': eloss})
-        wandb.log(dev_metrics)
         
         if best_metrics is None or dev_metrics[config['key_metric']] > best_metrics[config['key_metric']]:
             best_metrics = dev_metrics
             test_metrics = evaluate(config, model, test_query_ids)
             print(datetime.datetime.now(), 'epoch', epoch, 'train loss', eloss, 'dev', dev_metrics, 'test',
                   test_metrics, "*", flush=True)
+            wandb.log({'epoch': epoch, 'train/loss' : eloss, **{'dev/' + k : v for k, v in dev_metrics.items()}, **{'test/' + k : v for k, v in test_metrics.items()}})
         else:
             print(datetime.datetime.now(), 'epoch', epoch, 'train loss', eloss, 'dev', dev_metrics, flush=True)
+            wandb.log({'epoch': epoch, 'train/loss' : eloss, **{'dev/' + k : v for k, v in dev_metrics.items()}})
