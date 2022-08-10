@@ -9,7 +9,11 @@ from src.utils.reproducibility import set_random_seed
 from src.model.classification import ClassificationModel
 from src.graph_construction.tabular_graph import TabularGraph
 from src.utils.process_table_and_query import *
-from sklearn.metrics import f1_score
+from sklearn.metrics import classification_report
+from src.utils.dict import flatten as flat_dict
+
+import wandb
+wandb.init(project='gttc')
 
 # queires is used for splitting tables. 1 for train, 2 for dev and 3 for test
 queries = None
@@ -26,11 +30,11 @@ def evaluate(config, model, query_id_list):
 
     model.eval()
     with torch.no_grad():
-        for qid in tqdm(query_id_list):
+        for qid in query_id_list:
             query = queries["sentence"][qid]
             query_feature = queries["feature"][qid].to("cuda")
 
-            for (tid, rel) in qtrels[qid].items():
+            for (tid, rel) in tqdm(qtrels[qid].items()):
                 if tid not in tables:
                     continue
 
@@ -55,8 +59,8 @@ def evaluate(config, model, query_id_list):
     # metrics = get_metrics('ndcg_cut')
     # metrics.update(get_metrics('map'))
     # return metrics
-
-    return {config['key_metric']: f1_score(gold_rel, pred_rel, average='macro')}
+    cls_rep = classification_report(gold_rel, pred_rel, output_dict=True)
+    return flat_dict(cls_rep)
     
 
 
@@ -70,8 +74,7 @@ def train(config, model, train_query_ids, optimizer, scheduler, loss_func):
     n_iter = 0
     cnt = 0
 
-    pbar = tqdm(train_query_ids)
-    for qid in pbar:
+    for qid in train_query_ids:
         cnt += 1
 
         query = queries["sentence"][qid]
@@ -79,7 +82,8 @@ def train(config, model, train_query_ids, optimizer, scheduler, loss_func):
 
         logits = []
         labels = []
-        for (tid, rel) in qtrels[qid].items():
+        
+        for (tid, rel) in tqdm(qtrels[qid].items()):
             if tid not in tables:
                 continue
 
@@ -108,7 +112,6 @@ def train(config, model, train_query_ids, optimizer, scheduler, loss_func):
             optimizer.step()
             scheduler.step()
 
-            pbar.set_postfix(loss=batch_loss.item())
 
             optimizer.zero_grad()
             batch_loss = 0
@@ -232,6 +235,9 @@ def train_and_test_ttc(config):
         eloss = train(config, model, train_query_ids, optimizer, scheduler, loss_func)
         dev_metrics = evaluate(config, model, dev_query_ids)
 
+        wandb.log({'train/loss': eloss})
+        wandb.log(dev_metrics)
+        
         if best_metrics is None or dev_metrics[config['key_metric']] > best_metrics[config['key_metric']]:
             best_metrics = dev_metrics
             test_metrics = evaluate(config, model, test_query_ids)
