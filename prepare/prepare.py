@@ -87,7 +87,7 @@ def prepare(data, label):
                 'FirstColumnNumber': 0           # ? review
             })
             tabname = f'{t}-{s}'
-            ret_data[tabname] = {'table_array': mat}
+            ret_data[tabname] = {'table_array': [[j['Text'] for j in i] for i in mat]}
             ret_label[tabname] = lab
     assert len(label) ==  sum(len(v) for k, v in ans.items())
     return ret_data, ret_label
@@ -136,8 +136,8 @@ def main(args):
     data_all = {}
     for i in data_splits: data_all.update(i)
     assert len(data_all) == sum(len(i) for i in data_splits)
-    with open('tables.json', 'w') as f: json.dump(data_all, f)
-    pd.DataFrame.from_records(qtrel).to_csv('qtrels.txt', sep='\t', header=False, index=False)
+    with open(os.path.join(args.output_dir, 'tables.json'), 'w') as f: json.dump(data_all, f)
+    pd.DataFrame.from_records(qtrel).to_csv(os.path.join(args.output_dir, 'qtrels.txt'), sep='\t', header=False, index=False)
             
 
 if __name__ == "__main__":
