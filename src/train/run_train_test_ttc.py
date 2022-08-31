@@ -1,7 +1,7 @@
 import random
 import datetime
 import pandas as pd
-from pytorch_transformers import WarmupLinearSchedule
+from transformers import WarmupLinearSchedule
 
 from src.utils.trec_eval import write_trec_result, get_metrics
 from src.utils.load_data import load_queries, load_tables, load_qt_relations
