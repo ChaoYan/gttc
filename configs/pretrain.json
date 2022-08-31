@@ -1,7 +1,7 @@
 {
   "data_dir": "data/all/",
   "save_prefix": "pretrained_model",
-  "fasttext": "wiki.en.bin",
+  "fasttext": "models/wiki.en.bin",
   "epoch": 120,
   "batch_size": 16,
   "lr": 1e-4,

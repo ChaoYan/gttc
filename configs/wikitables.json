@@ -1,6 +1,6 @@
 {
   "data_dir": "data/wikitables/",
-  "fasttext": "wiki.en.bin",
+  "fasttext": "models/wiki.en.bin",
   "bert_dir": "bert-base-uncased",
   "merge_same_cells": false,
   "do_lower_case": true,

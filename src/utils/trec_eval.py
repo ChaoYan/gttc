@@ -1,7 +1,8 @@
+import os
 import subprocess
 
 
-def write_trec_result(eval_df, rank_path='trec_rank.txt', qrel_path='trec_qrel.txt'):
+def write_trec_result(eval_df, rank_path='output/trec_rank.txt', qrel_path='output/trec_qrel.txt'):        
     with open(rank_path, 'w') as f_rank, open(qrel_path, 'w') as f_rel:
         qids = [each for each in sorted(list(set([each for each in eval_df['id_left'].unique()])))]
         for qid in qids:
@@ -12,7 +13,7 @@ def write_trec_result(eval_df, rank_path='trec_rank.txt', qrel_path='trec_qrel.t
                 f_rel.write(f"{value[0]}\t0\t{value[1]}\t{value[2]}\n")
 
 
-def get_metrics(metric='ndcg_cut', rank_path='trec_rank.txt', qrel_path='trec_qrel.txt'):
+def get_metrics(metric='ndcg_cut', rank_path='output/trec_rank.txt', qrel_path='output/trec_qrel.txt'):
     if metric == 'ndcg_cut':
         metrics = ['ndcg_cut_5', 'ndcg_cut_10', 'ndcg_cut_15', 'ndcg_cut_20']
     elif metric == 'map':

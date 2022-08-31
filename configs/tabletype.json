@@ -1,7 +1,7 @@
 {
   "data_dir": "data/tabletype/",
   "num_classes": 2,
-  "fasttext": "wiki.en.bin",
+  "fasttext": "models/wiki.en.bin",
   "bert_dir": "bert-base-uncased",
   "key_metric": "macro avg/f1-score", 
   "merge_same_cells": false,
