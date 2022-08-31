@@ -2,7 +2,7 @@ import random
 import datetime
 import pandas as pd
 from sklearn.model_selection import ShuffleSplit
-from transformers import WarmupLinearSchedule
+from transformers import get_linear_schedule_with_warmup
 
 from src.utils.trec_eval import write_trec_result, get_metrics
 from src.utils.load_data import load_queries, load_tables, load_qt_relations
@@ -144,7 +144,8 @@ def cross_validation(config):
             {'params': model.bert.parameters(), 'lr': config["bert_lr"]},
             {'params': (x for x in model.parameters() if x not in set(model.bert.parameters())), 'lr': config["gnn_lr"]}
         ])
-        scheduler = WarmupLinearSchedule(optimizer, warmup_steps=config["warmup_steps"], t_total=config["total_steps"])
+        scheduler = get_linear_schedule_with_warmup(optimizer, config["warmup_steps"], config["total_steps"])
+        
 
         train_pairs = [(qid, tid, rel) for qid in train_query_ids for tid, rel in qtrels[qid].items()]
 
