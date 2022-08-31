@@ -1,5 +1,6 @@
 # Graph-based Table Retrieval (GTR)
 Code and data for our paper [Retrieving Complex Tables with Multi-Granular Graph Representation Learning](https://arxiv.org/abs/2105.01736) at SIGIR 2021.
+Refactor Code for table type classfication and table structure recognition.
 
 ## Quick Links
   - [Preliminary](#preliminary)
@@ -8,22 +9,19 @@ Code and data for our paper [Retrieving Complex Tables with Multi-Granular Graph
 
 ## Preliminary
 
-[Install DGL](https://docs.dgl.ai/en/0.4.x/install/):
+[Install requirements](https://docs.dgl.ai/en/0.4.x/install/):
 ```bash
-conda install -c dglteam dgl-cuda10.2  # pay attention to the cuda version
-```
-
-[Install fastText](https://fasttext.cc/docs/en/support.html):
-```bash
-git clone https://github.com/facebookresearch/fastText.git
-cd fastText
-pip install .
+pip install torch==1.9.0+cu111 -f https://download.pytorch.org/whl/torch_stable.html
+pip install dgl-cu111 dglgo -f https://data.dgl.ai/wheels/repo.html
+pip insatll git+https://github.com/facebookresearch/fastText
+pip install transformers pandas networkx tqdm sklearn
 ```
 
 Download [pretrained word vectors](https://fasttext.cc/docs/en/pretrained-vectors.html):
 ```bash
 wget https://dl.fbaipublicfiles.com/fasttext/vectors-wiki/wiki.en.zip
 unzip wiki.en.zip
+# (move unziped files to models dir)
 ```
 
 Install [trec_eval tool](https://github.com/usnistgov/trec_eval):
@@ -31,11 +29,7 @@ Install [trec_eval tool](https://github.com/usnistgov/trec_eval):
 git clone https://github.com/usnistgov/trec_eval.git
 cd trec_eval
 make
-```
-
-Install other requirements:
-```bash
-pip install -r requirements.txt
+# (move trec_eval to bin dir)
 ```
 
 ## Run

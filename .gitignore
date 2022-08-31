@@ -1,1 +1,5 @@
 .idea
+/data
+/models
+/bin
+**/__pycache__

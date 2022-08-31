@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pytorch_transformers import BertTokenizer, BertModel
+from transformers import BertTokenizer, BertModel
 
 from src.table_encoder.gat import GATEncoder
 

@@ -20,7 +20,7 @@ def get_metrics(metric='ndcg_cut', rank_path='trec_rank.txt', qrel_path='trec_qr
     else:
         raise ValueError(f"Invalid metric {metric}.")
 
-    results = subprocess.run(['./trec_eval/trec_eval', '-c', '-m', metric, '-q', qrel_path, rank_path],
+    results = subprocess.run(['./bin/trec_eval', '-c', '-m', metric, '-q', qrel_path, rank_path],
                              stdout=subprocess.PIPE).stdout.decode('utf-8')
 
     ndcg_scores = dict()
